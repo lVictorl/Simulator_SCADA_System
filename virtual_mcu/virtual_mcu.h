@@ -1,0 +1,1 @@
+// Модуль virtual_mcu

@@ -1,0 +1,1 @@
+// Модуль sensor_simulator
