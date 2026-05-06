@@ -9,3 +9,14 @@ VirtualMCU::~VirtualMCU()
     stopMCU();
     wait(3000);
 }
+
+void VirtualMCU::run()
+{
+    while (!isInterruptionRequested() && !m_stop_flag.loadRelaxed()) {
+        MCUTelemetry tele;
+        tele.sensors.timestamp = 0.0;
+        tele.state = BreakInState::IDLE;
+        sendTelemetry(tele);
+        msleep(static_cast<unsigned long>(m_dt * 1000));
+    }
+}
