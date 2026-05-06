@@ -49,3 +49,12 @@ void DataLogger::log(const MCUTelemetry &tele)
     ++m_log_counter;
     if (m_log_counter % 50 == 0) m_file.flush();
 }
+
+void DataLogger::close()
+{
+    if (m_file.isOpen()) {
+        m_file.flush();
+        m_file.close();
+    }
+    m_stream.setDevice(nullptr);
+}
