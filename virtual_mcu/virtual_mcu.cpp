@@ -26,3 +26,9 @@ void VirtualMCU::sendTelemetry(const MCUTelemetry &tele)
     if (m_slave_adapter)
         m_slave_adapter->updateTelemetry(tele);
 }
+
+void VirtualMCU::enqueueCommand(const MCUCommand &cmd)
+{
+    QMutexLocker lock(&m_cmd_mutex);
+    m_cmd_queue.enqueue(cmd);
+}
