@@ -34,3 +34,21 @@ QByteArray buildRequestFrame(quint8 slaveAddr, quint8 funcCode, const QByteArray
     frame.append(static_cast<char>((crc >> 8) & 0xFF));
     return frame;
 }
+
+bool parseResponseFrame(const QByteArray &frame, quint8 &addr, quint8 &func,
+                        QByteArray &payload)
+{
+    if (frame.size() < 4) return false;
+
+    const quint16 crcReceived =
+        (quint16(static_cast<quint8>(frame[frame.size()-1])) << 8) |
+         quint16(static_cast<quint8>(frame[frame.size()-2]));
+
+    const QByteArray body = frame.left(frame.size() - 2);
+    if (calcCRC16(body) != crcReceived) return false;
+
+    addr    = static_cast<quint8>(frame[0]);
+    func    = static_cast<quint8>(frame[1]);
+    payload = frame.mid(2, frame.size() - 4);
+    return true;
+}
