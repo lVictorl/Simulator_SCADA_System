@@ -1,1 +1,1 @@
-// Модуль session_history
+// session_history.cpp
