@@ -29,3 +29,23 @@ bool DataLogger::startSession(const QString &filename, SessionInfo &sessionInfo)
     m_log_counter = 0;
     return true;
 }
+
+void DataLogger::log(const MCUTelemetry &tele)
+{
+    if (!m_file.isOpen()) return;
+    const SensorData &s = tele.sensors;
+    m_stream << s.timestamp     << ','
+             << s.engine_rpm    << ','
+             << s.torque        << ','
+             << s.engine_temp   << ','
+             << s.oil_pressure  << ','
+             << s.fuel_pressure << ','
+             << s.boost_pressure<< ','
+             << s.dyno_motor_temp<< ','
+             << s.resistor_temp << ','
+             << s.oil_level     << ','
+             << s.fuel_level    << '\n';
+
+    ++m_log_counter;
+    if (m_log_counter % 50 == 0) m_file.flush();
+}
