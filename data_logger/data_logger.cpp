@@ -11,3 +11,21 @@ DataLogger::~DataLogger()
 {
     close();
 }
+
+bool DataLogger::startSession(const QString &filename, SessionInfo &sessionInfo)
+{
+    close();
+    const QString filepath = m_base_dir + QStringLiteral("/") + filename;
+    m_file.setFileName(filepath);
+    if (!m_file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+
+    m_stream.setDevice(&m_file);
+    m_stream.setEncoding(QStringConverter::Utf8);
+    m_stream << "timestamp,engine_rpm,torque,engine_temp,"
+                "oil_pressure,fuel_pressure,boost_pressure,"
+                "dyno_motor_temp,resistor_temp,oil_level,fuel_level\n";
+
+    sessionInfo.csv_filename = filepath;
+    m_log_counter = 0;
+    return true;
+}
