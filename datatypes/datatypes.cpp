@@ -27,3 +27,27 @@ void registerMetaTypes() {
     qRegisterMetaType<SensorFaultType>("SensorFaultType");
     // ... регистрация структур будет добавляться по мере создания
 }
+
+bool validateMCUCommand(const MCUCommand &cmd, QString &error)
+{
+    static const QStringList cmdIds = {
+        "start", "stop", "emergency_stop", "next_stage", "reset_emergency",
+        "set_throttle", "set_mode", "inject_fault", "clear_fault"
+    };
+    if (!cmdIds.contains(cmd.command_id)) {
+        error = "Неизвестная команда"; return false;
+    }
+    if (cmd.slave_id < 1 || cmd.slave_id > 247) {
+        error = "slave_id вне диапазона"; return false;
+    }
+    if (cmd.command_id == "start") {
+        if (cmd.duration_sec <= 0) { error = "Некорректная длительность"; return false; }
+        if (cmd.mode == BreakInMode::COLD && cmd.target_rpm <= 0) {
+            error = "Нужны обороты"; return false;
+        }
+        if (cmd.mode == BreakInMode::HOT_LOAD && cmd.target_torque < 0) {
+            error = "Нужен крутящий момент"; return false;
+        }
+    }
+    return true;
+}
