@@ -20,3 +20,9 @@ void VirtualMCU::run()
         msleep(static_cast<unsigned long>(m_dt * 1000));
     }
 }
+
+void VirtualMCU::sendTelemetry(const MCUTelemetry &tele)
+{
+    if (m_slave_adapter)
+        m_slave_adapter->updateTelemetry(tele);
+}
