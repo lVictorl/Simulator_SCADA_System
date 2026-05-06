@@ -12,3 +12,12 @@ void packScaledInt32(double value, quint8 *buf)
 }
 
 } // namespace ModbusUtils
+
+double unpackScaledInt32(const quint8 *buf)
+{
+    qint32 scaled = (qint32(buf[0]) << 24) |
+                    (qint32(buf[1]) << 16) |
+                    (qint32(buf[2]) <<  8) |
+                     qint32(buf[3]);
+    return static_cast<double>(scaled) / 1000.0;
+}
