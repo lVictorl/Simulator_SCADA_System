@@ -1,6 +1,11 @@
-// Модуль modbus_utils
-/*
- * Шайхуллин: Вместо float передавать по Modbus целые числа, умноженные на 10 (или 1000),
- * и после приёма делить для получения физической величины.
- * Это исключит погрешности плавающей точки.
- */
+#pragma once
+#include <QtCore/QByteArray>
+#include <cstdint>
+
+namespace ModbusUtils {
+    quint16 calcCRC16(const QByteArray &data);
+    void packScaledInt32(double value, quint8 *buf);
+    double unpackScaledInt32(const quint8 *buf);
+    QByteArray buildRequestFrame(quint8 slaveAddr, quint8 funcCode, const QByteArray &data);
+    bool parseResponseFrame(const QByteArray &frame, quint8 &addr, quint8 &func, QByteArray &payload);
+}
