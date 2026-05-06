@@ -21,3 +21,16 @@ double unpackScaledInt32(const quint8 *buf)
                      qint32(buf[3]);
     return static_cast<double>(scaled) / 1000.0;
 }
+
+QByteArray buildRequestFrame(quint8 slaveAddr, quint8 funcCode, const QByteArray &data)
+{
+    QByteArray frame;
+    frame.append(static_cast<char>(slaveAddr));
+    frame.append(static_cast<char>(funcCode));
+    frame.append(data);
+
+    quint16 crc = calcCRC16(frame);
+    frame.append(static_cast<char>(crc & 0xFF));
+    frame.append(static_cast<char>((crc >> 8) & 0xFF));
+    return frame;
+}
