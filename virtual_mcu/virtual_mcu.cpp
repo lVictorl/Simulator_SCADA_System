@@ -1,1 +1,1 @@
-// Модуль virtual_mcu
+// virtual_mcu.cpp
