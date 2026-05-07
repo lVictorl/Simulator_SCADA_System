@@ -1,4 +1,22 @@
 #include "modbus_utils.h"
+#include <cstring>
+
+namespace ModbusUtils {
+
+quint16 calcCRC16(const QByteArray &data)
+{
+    quint16 crc = 0xFFFF;
+    for (unsigned char byte : data) {
+        crc ^= byte;
+        for (int i = 0; i < 8; ++i) {
+            if (crc & 1)
+                crc = (crc >> 1) ^ 0xA001u;
+            else
+                crc >>= 1;
+        }
+    }
+    return crc;
+}
 
 namespace ModbusUtils {
 
