@@ -60,7 +60,7 @@ void MainWindow::setupUi()
 
     auto *bottomWidget = new QWidget;
     auto *bottomLayout = new QHBoxLayout(bottomWidget);
-    // setupReadingsPanel(bottomWidget);  // БУДЕТ
+    setupReadingsPanel(bottomWidget);
     // setupEventLog(bottomWidget);       // БУДЕТ
     splitter->addWidget(bottomWidget);
     splitter->setStretchFactor(0, 3);
@@ -173,3 +173,41 @@ void MainWindow::updateReadings(const SensorData &, const MCUTelemetry &) {}
 void MainWindow::appendLog(const QString &, bool) {}
 CriticalLimits MainWindow::collectLimits() const { return CriticalLimits(); }
 void MainWindow::finishSession(const MCUTelemetry &) {}
+
+void MainWindow::setupReadingsPanel(QWidget *parent)
+{
+    auto *group  = new QGroupBox(QStringLiteral("Текущие значения"), parent);
+    auto *grid   = new QGridLayout(group);
+
+    auto mkLabel = [&](const QString &caption, QLabel *&lbl, int row, int col) {
+        grid->addWidget(new QLabel(caption), row, col);
+        lbl = new QLabel(QStringLiteral("—"));
+        lbl->setMinimumWidth(80);
+        lbl->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        grid->addWidget(lbl, row, col + 1);
+    };
+
+    mkLabel(QStringLiteral("Обороты:"),    m_lblRpm,     0, 0);
+    mkLabel(QStringLiteral("Момент:"),     m_lblTorque,  1, 0);
+    mkLabel(QStringLiteral("Темп. ДВС:"),  m_lblEngTemp, 2, 0);
+    mkLabel(QStringLiteral("Давл. масла:"),m_lblOilPrs,  3, 0);
+    mkLabel(QStringLiteral("Давл. топл.:"),m_lblFuelPrs, 4, 0);
+
+    mkLabel(QStringLiteral("Наддув:"),     m_lblBoost,   0, 2);
+    mkLabel(QStringLiteral("Темп. ЭД:"),   m_lblDynoTemp,1, 2);
+    mkLabel(QStringLiteral("Темп. рез.:"), m_lblResTemp, 2, 2);
+    mkLabel(QStringLiteral("Масло, %:"),   m_lblOilLevel,3, 2);
+    mkLabel(QStringLiteral("Топливо, %:"), m_lblFuelLevel,4, 2);
+
+    grid->addWidget(new QLabel(QStringLiteral("Состояние:")), 5, 0);
+    m_lblState = new QLabel(QStringLiteral("Ожидание"));
+    m_lblState->setStyleSheet(QStringLiteral("font-weight:bold;color:gray;"));
+    grid->addWidget(m_lblState, 5, 1);
+
+    grid->addWidget(new QLabel(QStringLiteral("Дроссель:")), 5, 2);
+    m_lblThrottle = new QLabel(QStringLiteral("0 %"));
+    grid->addWidget(m_lblThrottle, 5, 3);
+
+    auto *botLayout = qobject_cast<QHBoxLayout*>(parent->layout());
+    if (botLayout) botLayout->addWidget(group);
+}
