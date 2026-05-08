@@ -163,8 +163,6 @@ void MainWindow::onStopClicked() {}
 void MainWindow::onEmergencyClicked() {}
 void MainWindow::onNextStageClicked() {}
 void MainWindow::onResetEmergencyClicked() {}
-void MainWindow::onThrottleChanged(int) {}
-void MainWindow::onManualThrottleToggled(bool) {}
 void MainWindow::onOpenActuators() {}
 void MainWindow::onOpenHistory() {}
 void MainWindow::onOpenFaultInjection() {}
@@ -210,4 +208,20 @@ void MainWindow::setupReadingsPanel(QWidget *parent)
 
     auto *botLayout = qobject_cast<QHBoxLayout*>(parent->layout());
     if (botLayout) botLayout->addWidget(group);
+}
+void MainWindow::onThrottleChanged(int value)
+{
+    m_lblThrValue->setText(QString::number(value) + " %");
+    if (m_chkManualThr->isChecked()) {
+        // TODO: Вызвать контроллер при интеграции
+        // m_controller->setThrottleManual(value);
+    }
+}
+
+void MainWindow::onManualThrottleToggled(bool checked)
+{
+    m_sliderThr->setEnabled(checked);
+    if (!checked) {
+        // TODO: Вернуть автоматический режим
+    }
 }
