@@ -1,4 +1,10 @@
 #include "core/virtual_mcu.h"
+#include "core/engine_model.h"
+#include "core/actuator_driver.h"
+#include "core/sensor_simulator.h"
+#include "core/pi_controller.h"
+#include "modbus/modbus_slave_adapter.h"
+
 
 VirtualMCU::VirtualMCU(QObject *parent, int slaveId, double dt)
     : QThread(parent), m_slave_id(slaveId), m_dt(dt)
