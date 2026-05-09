@@ -175,9 +175,6 @@ void MainWindow::onStopClicked() {}
 void MainWindow::onEmergencyClicked() {}
 void MainWindow::onNextStageClicked() {}
 void MainWindow::onResetEmergencyClicked() {}
-void MainWindow::onOpenActuators() {}
-void MainWindow::onOpenHistory() {}
-void MainWindow::onOpenFaultInjection() {}
 void MainWindow::updateUIState(BreakInState) {}
 void MainWindow::updateReadings(const SensorData &, const MCUTelemetry &) {}
 void MainWindow::appendLog(const QString &, bool) {}
@@ -288,4 +285,19 @@ void MainWindow::updatePlots()
     updatePlot(m_plotOilPrs,  m_plotTime, m_plotOilPrsData);
     updatePlot(m_plotDynoTemp,m_plotTime, m_plotDynoTempData);
     updatePlot(m_plotResTemp, m_plotTime, m_plotResTempData);
+}
+void MainWindow::onOpenActuators() {
+    auto *dlg = new ActuatorWindow(m_controller, this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+}
+void MainWindow::onOpenHistory() {
+    auto *dlg = new HistoryWindow(m_history, this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+}
+void MainWindow::onOpenFaultInjection() {
+    auto *dlg = new FaultInjectionDialog(m_controller, this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
 }
