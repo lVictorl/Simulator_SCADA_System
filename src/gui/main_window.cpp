@@ -167,7 +167,6 @@ void MainWindow::setupControlPanel(QWidget *parent)
 }
 
 // Заглушки для остальных методов (будут реализованы позже)
-void MainWindow::onTelemetryReceived(const MCUTelemetry &) {}
 void MainWindow::onConnectionLost(int) {}
 void MainWindow::onConnectionRestored(int) {}
 void MainWindow::onStartClicked() {}
@@ -300,4 +299,45 @@ void MainWindow::onOpenFaultInjection() {
     auto *dlg = new FaultInjectionDialog(m_controller, this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->show();
+}
+void MainWindow::onTelemetryReceived(const MCUTelemetry &tele)
+{
+    m_lastTelemetry = tele;
+    updateUIState(tele.state);
+    updateReadings(tele.sensors, tele);
+
+    for (const auto &err : tele.errors)
+        appendLog(QStringLiteral("⛔ ") + err, true);
+    for (const auto &warn : tele.warnings)
+        appendLog(QStringLiteral("⚠ ") + warn);
+
+    const double t = tele.sensors.timestamp;
+    m_plotTime          << t;
+    m_plotRpmData       << tele.sensors.engine_rpm;
+    m_plotTorqueData    << tele.sensors.torque;
+    m_plotEngTempData   << tele.sensors.engine_temp;
+    m_plotOilPrsData    << tele.sensors.oil_pressure;
+    m_plotDynoTempData  << tele.sensors.dyno_motor_temp;
+    m_plotResTempData   << tele.sensors.resistor_temp;
+
+    while (m_plotTime.size() > MAX_PLOT_POINTS) {
+        m_plotTime.removeFirst();
+        m_plotRpmData.removeFirst();      m_plotTorqueData.removeFirst();
+        m_plotEngTempData.removeFirst();  m_plotOilPrsData.removeFirst();
+        m_plotDynoTempData.removeFirst(); m_plotResTempData.removeFirst();
+    }
+    updatePlots();
+
+    if (m_sessionActive && m_logger->isOpen()) {
+        m_logger->log(tele);
+        m_sessionData    << tele.sensors;
+        m_sessionTimestamps << t;
+    }
+
+    if (m_sessionActive &&
+        (tele.state == BreakInState::STOPPED ||
+         tele.state == BreakInState::EMERGENCY))
+    {
+        finishSession(tele);
+    }
 }
