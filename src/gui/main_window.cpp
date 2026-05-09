@@ -256,4 +256,24 @@ void MainWindow::setupPlots(QWidget *parent)
     layout->addWidget(m_plotResTemp, 1, 2);
 }
 
-void MainWindow::updatePlots() {}
+void MainWindow::updatePlots()
+{
+    auto updatePlot = [](QCustomPlot *p, const QVector<double> &x, const QVector<double> &y) {
+        p->graph(0)->setData(x, y);
+        if (!x.isEmpty()) {
+            p->xAxis->setRange(x.first(), x.last());
+            double lo = *std::min_element(y.begin(), y.end());
+            double hi = *std::max_element(y.begin(), y.end());
+            const double margin = (hi - lo) * 0.1 + 1.0;
+            p->yAxis->setRange(lo - margin, hi + margin);
+        }
+        p->replot(QCustomPlot::rpQueuedReplot);
+    };
+
+    updatePlot(m_plotRpm,     m_plotTime, m_plotRpmData);
+    updatePlot(m_plotTorque,  m_plotTime, m_plotTorqueData);
+    updatePlot(m_plotEngTemp, m_plotTime, m_plotEngTempData);
+    updatePlot(m_plotOilPrs,  m_plotTime, m_plotOilPrsData);
+    updatePlot(m_plotDynoTemp,m_plotTime, m_plotDynoTempData);
+    updatePlot(m_plotResTemp, m_plotTime, m_plotResTempData);
+}
