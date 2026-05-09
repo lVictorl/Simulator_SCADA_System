@@ -55,7 +55,7 @@ void MainWindow::setupUi()
 
     auto *splitter = new QSplitter(Qt::Vertical);
     auto *plotWidget = new QWidget;
-    // setupPlots(plotWidget);   // БУДЕТ ДОБАВЛЕНО ПОЗЖЕ
+    setupPlots(plotWidget);
     splitter->addWidget(plotWidget);
 
     auto *bottomWidget = new QWidget;
@@ -225,3 +225,35 @@ void MainWindow::onManualThrottleToggled(bool checked)
         // TODO: Вернуть автоматический режим
     }
 }
+
+void MainWindow::setupPlots(QWidget *parent)
+{
+    auto *layout = new QGridLayout(parent);
+    layout->setContentsMargins(2, 2, 2, 2);
+
+    auto makePlot = [&](const QString &yLabel, const QColor &color) {
+        auto *p = new QCustomPlot;
+        p->addGraph();
+        p->graph(0)->setPen(QPen(color, 1.5));
+        p->xAxis->setLabel(QStringLiteral("t, с"));
+        p->yAxis->setLabel(yLabel);
+        p->setMinimumHeight(160);
+        return p;
+    };
+
+    m_plotRpm     = makePlot(QStringLiteral("об/мин"), Qt::blue);
+    m_plotTorque  = makePlot(QStringLiteral("Н·м"),    Qt::darkGreen);
+    m_plotEngTemp = makePlot(QStringLiteral("°C"),     Qt::red);
+    m_plotOilPrs  = makePlot(QStringLiteral("бар"),    Qt::darkCyan);
+    m_plotDynoTemp= makePlot(QStringLiteral("°C"),     Qt::magenta);
+    m_plotResTemp = makePlot(QStringLiteral("°C"),     QColor(180,90,0));
+
+    layout->addWidget(m_plotRpm,     0, 0);
+    layout->addWidget(m_plotTorque,  0, 1);
+    layout->addWidget(m_plotEngTemp, 0, 2);
+    layout->addWidget(m_plotOilPrs,  1, 0);
+    layout->addWidget(m_plotDynoTemp,1, 1);
+    layout->addWidget(m_plotResTemp, 1, 2);
+}
+
+void MainWindow::updatePlots() {}
