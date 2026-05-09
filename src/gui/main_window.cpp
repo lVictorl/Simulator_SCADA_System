@@ -169,11 +169,6 @@ void MainWindow::setupControlPanel(QWidget *parent)
 // Заглушки для остальных методов (будут реализованы позже)
 void MainWindow::onConnectionLost(int) {}
 void MainWindow::onConnectionRestored(int) {}
-void MainWindow::onStartClicked() {}
-void MainWindow::onStopClicked() {}
-void MainWindow::onEmergencyClicked() {}
-void MainWindow::onNextStageClicked() {}
-void MainWindow::onResetEmergencyClicked() {}
 void MainWindow::updateUIState(BreakInState) {}
 void MainWindow::updateReadings(const SensorData &, const MCUTelemetry &) {}
 void MainWindow::appendLog(const QString &, bool) {}
@@ -340,4 +335,72 @@ void MainWindow::onTelemetryReceived(const MCUTelemetry &tele)
     {
         finishSession(tele);
     }
+}
+void MainWindow::onStartClicked()
+{
+    bool ok;
+    const QString op = QInputDialog::getText(this, QStringLiteral("Оператор"),
+                                             QStringLiteral("Введите имя оператора:"),
+                                             QLineEdit::Normal, m_operatorName, &ok);
+    if (!ok) return;
+    m_operatorName = op;
+
+    const BreakInMode mode = m_modeCombo->currentData().value<BreakInMode>();
+    const CriticalLimits limits = collectLimits();
+
+    try {
+        m_controller->start(mode, m_durationSpin->value(),
+                            m_targetSpin->value(), limits,
+                            m_warmupSpin->value());
+
+        m_sessionData.clear();
+        m_sessionTimestamps.clear();
+        m_sessionStartTime = QDateTime::currentSecsSinceEpoch();
+        m_plotTime.clear();
+        m_plotRpmData.clear(); m_plotTorqueData.clear();
+        m_plotEngTempData.clear(); m_plotOilPrsData.clear();
+        m_plotDynoTempData.clear(); m_plotResTempData.clear();
+
+        const QString fname = QDateTime::currentDateTime()
+                              .toString(QStringLiteral("yyyyMMdd_hhmmss")) + ".csv";
+        SessionInfo si;
+        si.operator_name    = m_operatorName;
+        si.mode             = mode;
+        si.duration         = m_durationSpin->value();
+        si.warmup_duration  = m_warmupSpin->value();
+        si.target           = m_targetSpin->value();
+        si.limits           = limits;
+        si.start_time       = m_sessionStartTime;
+        m_lastTelemetry     = MCUTelemetry{};
+        m_logger->startSession(fname, si);
+        m_sessionActive = true;
+
+        appendLog(QStringLiteral("Сессия начата. Режим: ") + breakInModeDisplayName(mode));
+    } catch (const std::exception &e) {
+        QMessageBox::critical(this, QStringLiteral("Ошибка"), QString::fromLocal8Bit(e.what()));
+    }
+}
+
+void MainWindow::onStopClicked()
+{
+    try { m_controller->stop(); } catch (...) {}
+    appendLog(QStringLiteral("Команда СТОП"));
+}
+
+void MainWindow::onEmergencyClicked()
+{
+    try { m_controller->emergencyStop(); } catch (...) {}
+    appendLog(QStringLiteral("⚠ АВАРИЙНАЯ ОСТАНОВКА"), true);
+}
+
+void MainWindow::onNextStageClicked()
+{
+    try { m_controller->nextStage(); } catch (...) {}
+    appendLog(QStringLiteral("Ручной переход на следующий этап"));
+}
+
+void MainWindow::onResetEmergencyClicked()
+{
+    try { m_controller->resetEmergency(); } catch (...) {}
+    appendLog(QStringLiteral("Сброс аварии"));
 }
