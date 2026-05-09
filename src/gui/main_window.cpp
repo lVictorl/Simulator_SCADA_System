@@ -173,7 +173,6 @@ void MainWindow::updateUIState(BreakInState) {}
 void MainWindow::updateReadings(const SensorData &, const MCUTelemetry &) {}
 void MainWindow::appendLog(const QString &, bool) {}
 CriticalLimits MainWindow::collectLimits() const { return CriticalLimits(); }
-void MainWindow::finishSession(const MCUTelemetry &) {}
 
 void MainWindow::setupReadingsPanel(QWidget *parent)
 {
@@ -403,4 +402,30 @@ void MainWindow::onResetEmergencyClicked()
 {
     try { m_controller->resetEmergency(); } catch (...) {}
     appendLog(QStringLiteral("Сброс аварии"));
+}
+void MainWindow::finishSession(const MCUTelemetry &last)
+{
+    m_sessionActive = false;
+    m_logger->close();
+
+    SessionInfo si;
+    si.operator_name   = m_operatorName;
+    si.mode            = last.mode;
+    si.duration        = m_durationSpin->value();
+    si.warmup_duration = m_warmupSpin->value();
+    si.target          = m_targetSpin->value();
+    si.limits          = collectLimits();
+    si.start_time      = m_sessionStartTime;
+    si.end_time        = QDateTime::currentSecsSinceEpoch();
+    si.final_state     = last.state;
+
+    const QString rptPath = QStringLiteral("logs/report_") +
+        QDateTime::fromSecsSinceEpoch(static_cast<qint64>(si.start_time))
+            .toString(QStringLiteral("yyyyMMdd_hhmmss")) + ".html";
+
+    m_reporter->generate(si, m_sessionTimestamps, m_sessionData, rptPath);
+    si.report_file = rptPath;
+    m_history->addEntry(si, rptPath);
+
+    appendLog(QStringLiteral("✓ Сессия завершена. Отчёт: ") + rptPath);
 }
