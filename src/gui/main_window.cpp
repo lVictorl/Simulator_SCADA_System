@@ -54,6 +54,18 @@ void MainWindow::setupUi()
     mainLayout->addWidget(topWidget);
 
     auto *splitter = new QSplitter(Qt::Vertical);
+    auto *mb = menuBar();
+    auto *fileMenu = mb->addMenu(QStringLiteral("Файл"));
+    fileMenu->addAction(QStringLiteral("История испытаний"),
+                        this, &MainWindow::onOpenHistory);
+    fileMenu->addSeparator();
+    fileMenu->addAction(QStringLiteral("Выход"),
+                        qApp, &QApplication::quit);
+    auto *toolsMenu = mb->addMenu(QStringLiteral("Инструменты"));
+    toolsMenu->addAction(QStringLiteral("Управление исполнительными механизмами"),
+                         this, &MainWindow::onOpenActuators);
+    toolsMenu->addAction(QStringLiteral("Инжекция отказов"),
+                         this, &MainWindow::onOpenFaultInjection);
     auto *plotWidget = new QWidget;
     setupPlots(plotWidget);
     splitter->addWidget(plotWidget);
