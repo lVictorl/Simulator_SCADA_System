@@ -30,3 +30,5 @@ private:
     static constexpr int MAX_PLOT_POINTS = 3000;
     void setupPlots(QWidget *parent);
     void updatePlots();
+    QTextEdit *m_eventLog = nullptr;
+    void setupEventLog(QWidget *parent);

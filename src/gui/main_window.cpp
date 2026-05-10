@@ -169,8 +169,6 @@ void MainWindow::setupControlPanel(QWidget *parent)
 // Заглушки для остальных методов (будут реализованы позже)
 void MainWindow::onConnectionLost(int) {}
 void MainWindow::onConnectionRestored(int) {}
-void MainWindow::updateUIState(BreakInState) {}
-void MainWindow::updateReadings(const SensorData &, const MCUTelemetry &) {}
 void MainWindow::appendLog(const QString &, bool) {}
 CriticalLimits MainWindow::collectLimits() const { return CriticalLimits(); }
 
@@ -428,4 +426,67 @@ void MainWindow::finishSession(const MCUTelemetry &last)
     m_history->addEntry(si, rptPath);
 
     appendLog(QStringLiteral("✓ Сессия завершена. Отчёт: ") + rptPath);
+}
+
+void MainWindow::setupEventLog(QWidget *parent)
+{
+    auto *group  = new QGroupBox(QStringLiteral("Журнал событий"), parent);
+    auto *layout = new QVBoxLayout(group);
+    m_eventLog   = new QTextEdit;
+    m_eventLog->setReadOnly(true);
+    m_eventLog->setMaximumHeight(200);
+    layout->addWidget(m_eventLog);
+
+    auto *botLayout = qobject_cast<QHBoxLayout*>(parent->layout());
+    if (botLayout) botLayout->addWidget(group);
+}
+
+void MainWindow::appendLog(const QString &msg, bool isError)
+{
+    const QString ts = QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss.zzz"));
+    const QString line = QString(QStringLiteral("[%1] %2")).arg(ts, msg);
+    if (isError)
+        m_eventLog->append(QStringLiteral("<span style='color:red;'>") + line + QStringLiteral("</span>"));
+    else
+        m_eventLog->append(line);
+}
+void MainWindow::updateUIState(BreakInState state)
+{
+    const bool active = (state != BreakInState::IDLE &&
+                         state != BreakInState::STOPPED &&
+                         state != BreakInState::EMERGENCY);
+
+    m_btnStart->setEnabled(!active);
+    m_btnStop->setEnabled(active);
+    m_btnNextStage->setEnabled(active);
+    m_btnReset->setEnabled(state == BreakInState::EMERGENCY);
+    m_modeCombo->setEnabled(!active);
+    m_durationSpin->setEnabled(!active);
+    m_warmupSpin->setEnabled(!active);
+    m_targetSpin->setEnabled(!active);
+
+    m_lblState->setText(breakInStateDisplayName(state));
+    const QString style = (state == BreakInState::EMERGENCY)
+        ? QStringLiteral("font-weight:bold;color:red;")
+        : (active ? QStringLiteral("font-weight:bold;color:darkgreen;")
+                  : QStringLiteral("font-weight:bold;color:gray;"));
+    m_lblState->setStyleSheet(style);
+}
+
+void MainWindow::updateReadings(const SensorData &s, const MCUTelemetry &tele)
+{
+    auto fmt1 = [](double v) { return QString::number(v, 'f', 1); };
+    auto fmt2 = [](double v) { return QString::number(v, 'f', 2); };
+
+    m_lblRpm->setText(fmt1(s.engine_rpm) + QStringLiteral(" об/мин"));
+    m_lblTorque->setText(fmt1(s.torque) + QStringLiteral(" Н·м"));
+    m_lblEngTemp->setText(fmt1(s.engine_temp) + QStringLiteral(" °C"));
+    m_lblOilPrs->setText(fmt2(s.oil_pressure) + QStringLiteral(" бар"));
+    m_lblFuelPrs->setText(fmt2(s.fuel_pressure) + QStringLiteral(" бар"));
+    m_lblBoost->setText(fmt2(s.boost_pressure) + QStringLiteral(" бар"));
+    m_lblDynoTemp->setText(fmt1(s.dyno_motor_temp) + QStringLiteral(" °C"));
+    m_lblResTemp->setText(fmt1(s.resistor_temp) + QStringLiteral(" °C"));
+    m_lblOilLevel->setText(fmt1(s.oil_level) + QStringLiteral(" %"));
+    m_lblFuelLevel->setText(fmt1(s.fuel_level) + QStringLiteral(" %"));
+    m_lblThrottle->setText(fmt1(tele.throttle_pct) + QStringLiteral(" %"));
 }
