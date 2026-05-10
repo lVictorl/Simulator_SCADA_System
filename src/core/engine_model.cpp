@@ -62,3 +62,21 @@ void EngineModel::step(double dt, const ActuatorSetpoints &cmd)
         m_resistor_temp += (power_loss * 0.9 - cool_res) * dt;
     }
 }
+
+SensorData EngineModel::state() const
+{
+    SensorData s;
+    s.timestamp       = s_timer.elapsed() / 1000.0;
+    s.engine_rpm      = m_engine_rpm;
+    s.torque          = m_torque;
+    s.engine_temp     = m_engine_temp;
+    s.oil_pressure    = m_oil_pressure;
+    s.fuel_pressure   = m_fuel_pressure;
+    s.boost_pressure  = m_boost_pressure;
+    s.dyno_motor_temp = m_dyno_motor_temp;
+    s.resistor_temp   = m_resistor_temp;
+    s.oil_level       = m_oil_level;
+    s.fuel_level      = m_fuel_level;
+    s.fault_mask      = 0;
+    return s;
+}
