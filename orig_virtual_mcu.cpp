@@ -216,7 +216,7 @@ void VirtualMCU::updateActuatorsLogic()
     m_resistor_fan = s.resistor_temp  > 100.0;
 
     // ПИ-регулятор дросселя (только в горячих режимах, только без ручного управления)
-    if (
+    if (!m_manual_throttle &&
         (m_state == BreakInState::WARMUP   ||
          m_state == BreakInState::HOT_NOLOAD ||
          m_state == BreakInState::HOT_LOAD))
