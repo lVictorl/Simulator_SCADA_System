@@ -433,6 +433,8 @@ void MainWindow::onOpenActuators()
 {
     // ActuatorWindow создаётся по требованию
     auto *dlg = new ActuatorWindow(m_controller, this);
+    connect(m_master, auto *dlg = new ActuatorWindow(m_controller, this);ModbusMasterAdapter::telemetryReady, dlg, auto *dlg = new ActuatorWindow(m_controller, this);ActuatorWindow::updateFeedback, Qt::QueuedConnection);
+    if (m_lastTelemetry.sensors.timestamp != 0.0) dlg->updateFeedback(m_lastTelemetry.actuator_feedback);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
     dlg->show();
 }
