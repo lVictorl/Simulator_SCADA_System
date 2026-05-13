@@ -1,26 +1,30 @@
 #pragma once
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QCheckBox>
 #include "datatypes.h"
 
 class HighLevelController;
 
-/** Диалог отображения/управления исполнительными механизмами. */
 class ActuatorWindow : public QDialog
 {
     Q_OBJECT
 public:
     explicit ActuatorWindow(HighLevelController *ctrl, QWidget *parent = nullptr);
-    void updateFeedback(const ActuatorFeedback &fb);
+
+public slots:
+    void onTelemetryReceived(const MCUTelemetry &tele);
 
 private:
-    QLabel *m_lblThrottle = nullptr;
-    QLabel *m_lblSpeed    = nullptr;
-    QLabel *m_lblTorque   = nullptr;
-    QLabel *m_lblEngFan   = nullptr;
-    QLabel *m_lblDynoFan  = nullptr;
-    QLabel *m_lblResFan   = nullptr;
+    void updateFeedback(const ActuatorFeedback &fb);
+
+    QLabel *m_lblThrottle  = nullptr;
+    QLabel *m_lblSpeed     = nullptr;
+    QLabel *m_lblTorque    = nullptr;
+    QLabel *m_lblEngFan    = nullptr;
+    QLabel *m_lblDynoFan   = nullptr;
+    QLabel *m_lblResFan    = nullptr;
+    QLabel *m_lblDynoMode  = nullptr;
+    QLabel *m_lblEngRunning= nullptr;
 
     HighLevelController *m_ctrl;
 };
