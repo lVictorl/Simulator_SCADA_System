@@ -1,4 +1,4 @@
-#include "gui/history_window.h"
+#include "history_window.h"
 #include <QtWidgets/QVBoxLayout>
 
 HistoryWindow::HistoryWindow(SessionHistory *history, QWidget *parent)

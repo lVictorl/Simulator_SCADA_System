@@ -1,5 +1,6 @@
-#include "core/data_logger.h"
+#include "data_logger.h"
 #include <QtCore/QDir>
+#include <QtCore/QDateTime>
 
 DataLogger::DataLogger(const QString &baseDir)
     : m_base_dir(baseDir)
@@ -21,6 +22,8 @@ bool DataLogger::startSession(const QString &filename, SessionInfo &sessionInfo)
 
     m_stream.setDevice(&m_file);
     m_stream.setEncoding(QStringConverter::Utf8);
+
+    // Заголовок CSV
     m_stream << "timestamp,engine_rpm,torque,engine_temp,"
                 "oil_pressure,fuel_pressure,boost_pressure,"
                 "dyno_motor_temp,resistor_temp,oil_level,fuel_level\n";
