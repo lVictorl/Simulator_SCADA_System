@@ -7,7 +7,7 @@
 #include <QtGui/QDesktopServices>
 #include <QtCore/QUrl>
 
-HistoryWindow::HistoryWindow(SessionHistory *history, QWidget @id871537943 (*parent))
+HistoryWindow::HistoryWindow(SessionHistory *history, QWidget *parent)
     : QDialog(parent), m_history(history)
 {
     setWindowTitle(QStringLiteral("История испытаний"));

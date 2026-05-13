@@ -431,9 +431,17 @@ void MainWindow::onManualThrottleToggled(bool checked)
 
 void MainWindow::onOpenActuators()
 {
-    // ActuatorWindow создаётся по требованию
     auto *dlg = new ActuatorWindow(m_controller, this);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
+
+    // Подключаем поток телеметрии к окну
+    connect(m_master, &ModbusMasterAdapter::telemetryReady,
+            dlg,      &ActuatorWindow::onTelemetryReceived,
+            Qt::QueuedConnection);
+
+    // Сразу показываем последние известные значения
+    dlg->onTelemetryReceived(m_lastTelemetry);
+
     dlg->show();
 }
 
