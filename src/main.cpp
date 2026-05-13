@@ -1,14 +1,25 @@
 /**
- * main.cpp — точка входа SCADA-системы обкатки дизельного двигателя.
+ * @file main.cpp
+ * @brief Точка входа SCADA-системы обкатки дизельного двигателя.
  *
- * Порядок создания компонентов:
- *  1. VirtualMCU  (поток симуляции)
- *  2. ModbusSlaveAdapter  (поток ведомого)
- *  3. EmulatedModbusTransport  (связь MCU ↔ мастер)
- *  4. ModbusMasterAdapter  (поток мастера)
- *  5. HighLevelController  (API для GUI)
- *  6. DataLogger, SessionHistory, Reporter
- *  7. MainWindow
+ * Порядок инициализации важен:
+ *
+ *  1. QApplication          — Qt event loop
+ *  2. registerMetaTypes()   — ДО создания любых потоков!
+ *  3. VirtualMCU            — физика и конечный автомат
+ *  4. ModbusSlaveAdapter    — ведомое Modbus-устройство
+ *  5. EmulatedModbusTransport — связь мастер ↔ ведомый
+ *  6. ModbusMasterAdapter   — ведущее Modbus-устройство
+ *  7. HighLevelController   — API для GUI
+ *  8. DataLogger + SessionHistory — хранение данных
+ *  9. Запуск потоков (slave → mcu → master, порядок важен!)
+ * 10. MainWindow            — главное окно
+ * 11. app.exec()            — цикл событий Qt
+ * 12. Корректное завершение (обратный порядок)
+ *
+ * Диаграмма владения объектами:
+ *   main владеет всеми объектами (сырые указатели)
+ *   QThread-объекты удаляются после wait()
  */
 
 #include <QtWidgets/QApplication>
@@ -27,57 +38,79 @@
 
 int main(int argc, char *argv[])
 {
+    // ── Qt Application ────────────────────────────────────────────────────────
     QApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("EngineSCADA"));
     app.setApplicationVersion(QStringLiteral("1.0"));
     app.setOrganizationName(QStringLiteral("Lab"));
 
-    // Регистрируем все пользовательские типы для Qt мета-системы
-    // (необходимо для Qt::QueuedConnection через границы потоков)
+    // ── ВАЖНО: регистрация мета-типов ДО создания потоков ────────────────────
+    // Qt использует мета-систему для передачи объектов через Qt::QueuedConnection.
+    // Без регистрации сигнал telemetryReady(MCUTelemetry) не будет работать
+    // между потоками — Qt не знает как скопировать MCUTelemetry в очередь.
     registerMetaTypes();
 
+    // Создаём папку для логов если не существует
     QDir().mkpath(QStringLiteral("logs"));
 
-    // ── 1. Виртуальный МКУ (ведомый) ─────────────────────────────────────────
-    auto *mcu = new VirtualMCU(nullptr, /*slaveId=*/1, /*dt=*/0.02);
+    // ── 1. Виртуальный МКУ (ведомое устройство) ──────────────────────────────
+    // slaveId=1, dt=0.02с (50 Гц симуляция)
+    auto *mcu = new VirtualMCU(nullptr, 1, 0.02);
 
-    // ── 2. Modbus ведомый ─────────────────────────────────────────────────────
+    // ── 2. Modbus slave (обрабатывает входящие кадры от мастера) ─────────────
     auto *slave = new ModbusSlaveAdapter(1);
+
+    // Двусторонняя связь MCU ↔ Slave:
+    //   slave → MCU: команды (slave::handleWrite → mcu::enqueueCommand)
+    //   MCU → slave: телеметрия (mcu::sendTelemetry → slave::updateTelemetry)
     slave->setMCU(mcu);
     mcu->setSlaveAdapter(slave);
 
-    // ── 3. Транспорт ─────────────────────────────────────────────────────────
+    // ── 3. Транспортный уровень ───────────────────────────────────────────────
+    // EmulatedModbusTransport: мастер и slave соединены напрямую (без COM-порта).
+    // Для реального железа замените на:
+    //   auto *transport = new SerialModbusTransport("/dev/ttyUSB0", 115200);
+    //   transport->open();
     auto *transport = new EmulatedModbusTransport(slave);
 
-    // ── 4. Modbus мастер ──────────────────────────────────────────────────────
+    // ── 4. Modbus master (опрашивает slave каждые 50 мс) ─────────────────────
     auto *master = new ModbusMasterAdapter(transport, {1});
 
-    // ── 5. Высокоуровневый контроллер ─────────────────────────────────────────
+    // ── 5. Высокоуровневый контроллер (API для GUI) ───────────────────────────
     auto *controller = new HighLevelController(master, 1);
 
-    // ── 6. Логирование и история ──────────────────────────────────────────────
+    // ── 6. Хранение данных ────────────────────────────────────────────────────
     auto *logger  = new DataLogger(QStringLiteral("logs"));
     auto *history = new SessionHistory(QStringLiteral("logs"));
 
-    // ── 7. Запуск потоков ─────────────────────────────────────────────────────
+    // ── 7. Запуск потоков (порядок критичен!) ─────────────────────────────────
+    // slave запускается первым — MCU сразу может слать телеметрию
     slave->start();
+    // MCU запускается вторым — slave уже готов принять данные
     mcu->start();
+    // master запускается последним — начинает опрашивать уже работающий slave
     master->start();
 
     // ── 8. Главное окно ───────────────────────────────────────────────────────
     MainWindow win(controller, master, logger, history);
     win.show();
 
+    // ── Цикл событий Qt ───────────────────────────────────────────────────────
     const int ret = app.exec();
 
-    // ── Корректное завершение ─────────────────────────────────────────────────
+    // ── Корректное завершение (обратный порядок запуска!) ────────────────────
+    // 1. Останавливаем мастер — больше не посылаем запросы
     master->stop();
+    // 2. Останавливаем MCU — больше не обрабатываем команды и физику
     mcu->stopMCU();
+    // 3. Останавливаем slave — больше не обрабатываем Modbus-кадры
     slave->stopAdapter();
 
+    // Ждём реального завершения потоков (максимум 3 секунды каждый)
     mcu->wait(3000);
     slave->wait(3000);
 
+    // Освобождаем память
     delete controller;
     delete master;
     delete transport;
