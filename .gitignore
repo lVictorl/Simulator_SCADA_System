@@ -1,0 +1,33 @@
+# Build
+build/
+cmake-build-*/
+*.o
+*.a
+*.so
+*.dll
+*.exe
+
+# Qt
+*.moc
+moc_*.cpp
+moc_*.h
+ui_*.h
+qrc_*.cpp
+*.qm
+
+# IDE
+.idea/
+.vscode/
+*.user
+*.creator
+*.creator.user*
+CMakeLists.txt.user
+
+# Logs & reports
+logs/*.csv
+logs/*.html
+logs/session_index.json
+
+# Third-party (пользователь добавляет сам)
+third_party/qcustomplot.h
+third_party/qcustomplot.cpp
