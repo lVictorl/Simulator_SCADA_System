@@ -17,7 +17,7 @@ public:
     void applySetpoints(const ActuatorSetpoints &sp, double dt);
 
     const ActuatorSignals  &actuatorSignals() const { return m_signals; }
-    const ActuatorFeedback &feedback() const { return m_feedback; }
+    const ActuatorFeedback &feedback()        const { return m_feedback; }
 
 private:
     ActuatorSignals  m_signals;
