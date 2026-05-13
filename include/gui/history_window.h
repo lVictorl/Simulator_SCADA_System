@@ -3,11 +3,18 @@
 #include <QtWidgets/QTableWidget>
 #include "session_history.h"
 
-class HistoryWindow : public QDialog {
+class HistoryWindow : public QDialog
+{
     Q_OBJECT
 public:
-    explicit HistoryWindow(SessionHistory *history, QWidget *parent = nullptr);
+    HistoryWindow(SessionHistory *history, QWidget *parent = nullptr);
+
+private slots:
+    void onOpenReport(int row, int col);
+
 private:
-    QTableWidget *m_table;
-    SessionHistory *m_history;
+    void populate();
+    SessionHistory  *m_history;
+    QTableWidget    *m_table = nullptr;
+    QStringList      m_reportPaths;
 };

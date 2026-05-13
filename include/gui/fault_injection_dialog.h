@@ -2,12 +2,20 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QComboBox>
 #include "datatypes.h"
+#include "high_level_controller.h"
 
-class FaultInjectionDialog : public QDialog {
+class FaultInjectionDialog : public QDialog
+{
     Q_OBJECT
 public:
-    explicit FaultInjectionDialog(QWidget *parent = nullptr);
+    FaultInjectionDialog(HighLevelController *ctrl, QWidget *parent = nullptr);
+
+private slots:
+    void onInject();
+    void onClear();
+
 private:
-    QComboBox *m_sensorCombo;
-    QComboBox *m_faultCombo;
+    QComboBox *m_sensorCombo = nullptr;
+    QComboBox *m_faultCombo  = nullptr;
+    HighLevelController *m_ctrl;
 };
