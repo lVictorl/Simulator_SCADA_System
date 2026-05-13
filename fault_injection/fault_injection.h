@@ -1,1 +1,0 @@
-// Модуль fault_injection
